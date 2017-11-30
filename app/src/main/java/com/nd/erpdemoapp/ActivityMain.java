@@ -21,7 +21,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
+public class ActivityMain extends FragmentActivity implements OnMapReadyCallback {
     AllMethods mAllMethods;
 
     public static Activity mActivity;
@@ -33,6 +33,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     public static double userLatitude, userLongitude;
     public static final int REQUEST_ACCESS_LOCATION = 102;
 
+    private LocalBroadcastManager mLocalBroadcastMng;
     private BroadcastReceiver mLocationReceiver;
 
     @Override
@@ -68,20 +69,31 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
 
+        mLocalBroadcastMng = LocalBroadcastManager.getInstance(this);
+        mLocalBroadcastMng.registerReceiver(mLocationReceiver, new IntentFilter("GPSLocationUpdates"));
+
         setPageRedirection();
-        LocalBroadcastManager.getInstance(mActivity).registerReceiver(mLocationReceiver, new IntentFilter("GPSLocationUpdates"));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        if (mLocationReceiver != null) {
-            unregisterReceiver(mLocationReceiver);
-        }
+        unRegisterReceiver();
     }
 
     private void setPageRedirection() {
+        try {
+            if (locationManager == null) {
+                locationManager = new GPSTracker(this, getApplicationContext());
+            }
+
+            checkLocationPermission();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        /*
         if (!mAllMethods.check_Internet()) {
             mAllMethods.openNoConnectionPage(this, Intent.FLAG_ACTIVITY_CLEAR_TOP);
         } else {
@@ -95,13 +107,26 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
         }
+        */
+    }
+
+    private void requestPermission(final String permission, String rationale, final int requestCode) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+            ActivityCompat.requestPermissions(mActivity, new String[]{permission}, requestCode);
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
+        }
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mGoogleMap = googleMap;
-
-        checkLocationPermission();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_ACCESS_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                checkLocationPermission();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     public void checkLocationPermission() {
@@ -139,23 +164,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void requestPermission(final String permission, String rationale, final int requestCode) {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-            ActivityCompat.requestPermissions(mActivity, new String[]{permission}, requestCode);
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
-        }
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_ACCESS_LOCATION) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                checkLocationPermission();
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
+    public void onMapReady(GoogleMap googleMap) {
+        mGoogleMap = googleMap;
+
+        checkLocationPermission();
     }
 
     private void setMarkerOnMap(Location location) {
@@ -168,4 +181,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mPlaceLatLng, 15));
         }
     }
+
+    private void unRegisterReceiver() {
+        try {
+            if (mLocalBroadcastMng != null && mLocationReceiver != null) {
+                mLocalBroadcastMng.unregisterReceiver(mLocationReceiver);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

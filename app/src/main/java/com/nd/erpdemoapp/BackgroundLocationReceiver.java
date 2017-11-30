@@ -14,7 +14,6 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
-import android.util.Log;
 
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         try {
             boolean isGetLocation = false;
-            mAllMethods = new AllMethods(MainActivity.mActivity);
+            mAllMethods = new AllMethods(ActivityMain.mActivity);
             locationManager = new GPSTracker(context);
 
             if (locationManager.canGetLocation()) {
@@ -68,7 +67,7 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
     }
 
     private void showLocationErrorDialog() {
-        ShowDialog(MainActivity.mActivity, "Location Service", "Turn on location services to locate your position.", "Setting", "Cancel");
+        ShowDialog(ActivityMain.mActivity, "Location Service", "Turn on location services to locate your position.", "Setting", "Cancel");
     }
 
     private boolean isAppIsInBackground(Context context) {
