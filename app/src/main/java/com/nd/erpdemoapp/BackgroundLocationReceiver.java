@@ -9,7 +9,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
@@ -31,11 +33,11 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
             mAllMethods = new AllMethods(MainActivity.mActivity);
             locationManager = new GPSTracker(context);
 
-            if(locationManager.canGetLocation()){
+            if (locationManager.canGetLocation()) {
                 userLocation = locationManager.getLocation();
 
-                if(userLocation != null){
-                    if(userLocation.getLatitude()!=0.0 && userLocation.getLongitude()!=0.0){
+                if (userLocation != null) {
+                    if (userLocation.getLatitude() != 0.0 && userLocation.getLongitude() != 0.0) {
                         userLatitude = userLocation.getLatitude();
                         userLongitude = userLocation.getLongitude();
 
@@ -45,11 +47,18 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
             }
 
             if (isGetLocation) {
-                Log.e("Latlng : ", userLatitude + ", " + userLongitude);
-
+                /*
                 if(mAllMethods.check_Internet() == true){
-                    // new userLocationUpdate().execute();
+                    new userLocationUpdate().execute();
                 }
+                */
+
+                Intent mIntent = new Intent("GPSLocationUpdates");
+                Bundle mBundle = new Bundle();
+                mBundle.putParcelable("location", userLocation);
+                mIntent.putExtra("location", mBundle);
+
+                LocalBroadcastManager.getInstance(context).sendBroadcast(mIntent);
             } else {
                 showLocationErrorDialog();
             }
@@ -61,7 +70,6 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
     private void showLocationErrorDialog() {
         ShowDialog(MainActivity.mActivity, "Location Service", "Turn on location services to locate your position.", "Setting", "Cancel");
     }
-
 
     private boolean isAppIsInBackground(Context context) {
         boolean isInBackground = true;
@@ -94,11 +102,11 @@ public class BackgroundLocationReceiver extends BroadcastReceiver {
         return isInBackground;
     }
 
-    public void ShowDialog(final Activity mActivity, String Title , String Message, String Ok, String cancel) {
+    public void ShowDialog(final Activity mActivity, String Title, String Message, String Ok, String cancel) {
         try {
-            if(LocationAlertDialog == null || (LocationAlertDialog != null && !LocationAlertDialog.isShowing())){
-                if(mActivity != null){
-                    if(!isAppIsInBackground(mActivity)){
+            if (LocationAlertDialog == null || (LocationAlertDialog != null && !LocationAlertDialog.isShowing())) {
+                if (mActivity != null) {
+                    if (!isAppIsInBackground(mActivity)) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(new ContextThemeWrapper(mActivity, R.style.AlertDialogTheme));
 
                         alertDialogBuilder.setTitle(Title);
